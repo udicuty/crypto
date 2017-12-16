@@ -49,7 +49,7 @@ df=gdax %>% inner_join(bitstamp,suffix = c(".gdax",".bitstamp"),by = c("timestam
   mutate(margin=price.gdax-price.bitstamp,
          marginratio=margin/price.bitstamp*100) %>%
   group_by(product) %>% 
-  mutate(margin30=lead(price.gdax,30)-price.bitstamp) %>%
+  mutate(margin30=lead(price.gdax,60)-price.bitstamp) %>% #30 minutes lead
   mutate(margin30ratio=margin30/price.bitstamp*100) %>%
   na.omit
          #margin1800sec=lead(price.gdax,60)-price.bitstamp)#,
