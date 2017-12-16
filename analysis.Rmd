@@ -1,0 +1,76 @@
+---
+title: "analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+require(ggplot2)
+require(tidyverse)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+gdax=read_csv("data/gdax-e89a55a5-c424-4455-9d30-7e3250f4fc05.csv") %>%
+  mutate(product=tolower(gsub('-','',product))) %>%
+  mutate(product=factor(product)) %>% na.omit()
+
+bitstamp=read_csv("data/bitstamp_136f0570-1010-403b-ab1b-53f3a31c8bd7.csv") %>%
+  mutate(product=factor(product)) %>% na.omit()
+glimpse(bitstamp)
+glimpse(gdax)
+
+bitstamp
+```
+
+```{r}
+
+
+ggplot(bitstamp,aes(x=timestamp,y=price)) + geom_line(aes(color=market)) + geom_line(data = gdax,aes(color=market)) + facet_wrap(~product,scales = "free") 
+
+
+```
+
+```{r}
+df=gdax %>% inner_join(bitstamp,suffix = c(".gdax",".bitstamp"),by = c("timestamp","product")) %>%
+  select(-contains('market')) %>% filter(!duplicated(timestamp)) %>%
+  mutate(margin=price.gdax-price.bitstamp,
+         marginratio=margin/price.bitstamp*100) %>%
+  group_by(product) %>% 
+  mutate(margin30=lead(price.gdax,30)-price.bitstamp) %>%
+  mutate(margin30ratio=margin30/price.bitstamp*100) %>%
+  na.omit
+         #margin1800sec=lead(price.gdax,60)-price.bitstamp)#,
+         #margin1800=lead(price.gdax,60)-price.bitstamp) %>%
+df
+
+ggplot(df,aes(x=timestamp,y=margin)) + geom_line(col='blue') + geom_line(aes(y=margin30),col='red')+ facet_wrap(~product,scales = "free")
+ggplot(df,aes(x=timestamp,y=marginratio)) +geom_line(col='blue') + geom_line(aes(y=margin30ratio),col='red') + facet_wrap(~product,scales = "free")
+
+#ggplot(df,aes(x=margin,y=margin30)) +geom_line(col='blue') + facet_wrap(~product,scales = "free")
+
+#ggplot(df,aes(x=timestamp,y=margin1800sec)) + geom_line()  + facet_wrap(~product,scales = "free")
+```
+
+```{r}
+plot(df)
+```
+
+```{r}
+gdax$timestamp[1:10]
+dplyr::lead(gdax$timestamp[1:10],n=1)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
